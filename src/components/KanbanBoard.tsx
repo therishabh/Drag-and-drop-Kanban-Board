@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import PlusIcon from "../icons/PlusIcon";
 import { Column, Id, Task } from "../types";
 import { generateId } from "../utils";
@@ -32,6 +32,21 @@ const KanbanBoard = () => {
     })
   );
 
+  useEffect(() => {
+    const localStorageColumns = localStorage.getItem("columns")
+      ? JSON.parse(localStorage.getItem("columns") || '{}')
+      : [];
+    setColumns(localStorageColumns);
+    const localStorageTasks = localStorage.getItem("tasks")
+      ? JSON.parse(localStorage.getItem("tasks") || '{}')
+      : [];
+    setTasks(localStorageTasks);
+  }, []);
+
+  useEffect(() => {
+    saveToLocalStorage();
+  }, [columns, tasks]);
+
   const createNewColumn = () => {
     const columnToAdd: Column = {
       id: generateId(),
@@ -44,7 +59,7 @@ const KanbanBoard = () => {
     const filterColumns = columns.filter((col) => col.id != id);
     setColumns([...filterColumns]);
 
-    const updatedTasks = tasks.filter(task => task.columnId != id);
+    const updatedTasks = tasks.filter((task) => task.columnId != id);
     setTasks(updatedTasks);
   };
 
@@ -54,7 +69,7 @@ const KanbanBoard = () => {
       setActiveColumn(activeCol);
       return;
     }
-    if(event.active.data.current?.type === "Task") {
+    if (event.active.data.current?.type === "Task") {
       const activeTsk = event.active.data.current?.task;
       setActiveTask(activeTsk);
       return;
@@ -100,56 +115,58 @@ const KanbanBoard = () => {
     setTasks([...tasks, newtask]);
   };
 
-  const deleteTask = (taskId : Id) => {
-    const updatedTask = tasks.filter(val => val.id !== taskId);
+  const deleteTask = (taskId: Id) => {
+    const updatedTask = tasks.filter((val) => val.id !== taskId);
     setTasks(updatedTask);
-  }
+  };
 
-  const updateTaskContent = (taskId : Id, content: string) => {
+  const updateTaskContent = (taskId: Id, content: string) => {
     const updatedTasks = tasks.map((task) => {
       return task.id == taskId ? { ...task, content } : task;
     });
     setTasks(updatedTasks);
-  }
+  };
 
-  const onDragOver = (event : DragOverEvent) => {
+  const saveToLocalStorage = () => {
+    localStorage.setItem("columns", JSON.stringify(columns));
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+  };
+
+  const onDragOver = (event: DragOverEvent) => {
     const { over, active } = event;
-    console.log('over', over);
     if (!over) return;
 
     const activeTaskId = active.id;
     const overTaskId = over.id;
     if (activeTaskId === overTaskId) return;
 
-    const isActiveTask = active.data.current?.type === 'Task';
-    const isOverTask = over.data.current?.type === 'Task';
+    const isActiveTask = active.data.current?.type === "Task";
+    const isOverTask = over.data.current?.type === "Task";
 
-    if(!isActiveTask) return
+    if (!isActiveTask) return;
 
-    if(isActiveTask && isOverTask){
-      setTasks(tasks => {
+    if (isActiveTask && isOverTask) {
+      setTasks((tasks) => {
         const activeTaskIndex = tasks.findIndex(
           (val) => val.id === activeTaskId
         );
-        const overTaskIndex = tasks.findIndex(
-          (val) => val.id === overTaskId
-        );
+        const overTaskIndex = tasks.findIndex((val) => val.id === overTaskId);
         tasks[activeTaskIndex].columnId = tasks[overTaskIndex].columnId;
         return arrayMove(tasks, activeTaskIndex, overTaskIndex);
-      })
+      });
     }
 
-    const isOverColumn = over.data.current?.type === 'Column';
-    if(isOverColumn && isActiveTask){
-      setTasks(tasks => {
+    const isOverColumn = over.data.current?.type === "Column";
+    if (isOverColumn && isActiveTask) {
+      setTasks((tasks) => {
         const activeTaskIndex = tasks.findIndex(
           (val) => val.id === activeTaskId
         );
         tasks[activeTaskIndex].columnId = overTaskId;
         return arrayMove(tasks, activeTaskIndex, activeTaskIndex);
-      })
+      });
     }
-  }
+  };
 
   return (
     <div
@@ -185,7 +202,7 @@ const KanbanBoard = () => {
                   deleteColumn={deleteColumn}
                   updateColumnTitle={updateColumnTitle}
                   createTask={createTask}
-                  tasks={tasks.filter(val => val.columnId === col.id)}
+                  tasks={tasks.filter((val) => val.columnId === col.id)}
                   deleteTask={deleteTask}
                   updateTaskContent={updateTaskContent}
                 />
@@ -221,14 +238,17 @@ const KanbanBoard = () => {
                 deleteColumn={deleteColumn}
                 updateColumnTitle={updateColumnTitle}
                 createTask={createTask}
-                tasks={tasks.filter(val => val.columnId === activeColumn.id)}
+                tasks={tasks.filter((val) => val.columnId === activeColumn.id)}
                 deleteTask={deleteTask}
                 updateTaskContent={updateTaskContent}
-
-                />
+              />
             )}
             {activeTask && (
-              <TaskCard task={activeTask} deleteTask={deleteColumn} updateTaskContent={updateTaskContent} />
+              <TaskCard
+                task={activeTask}
+                deleteTask={deleteColumn}
+                updateTaskContent={updateTaskContent}
+              />
             )}
           </DragOverlay>,
           document.body
