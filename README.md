@@ -1,6 +1,9 @@
 # Demo
 https://rishabh-dnd-kanban-board.netlify.app/
 
+# Tutorial (Youtube)
+https://www.youtube.com/watch?v=RG-3R6Pu_Ik
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
